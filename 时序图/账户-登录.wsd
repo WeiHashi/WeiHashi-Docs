@@ -1,0 +1,88 @@
+@startuml 账户-登录
+actor "User" as user
+participant "QQ小程序" as qp
+participant "Android APP" as app
+participant "管理员平台" as admin
+participant "Server" as server
+participant "MySQL" as db
+participant "QQ小程序Server" as qps
+participant "QQ Server" as qs
+==小程序登录==
+user->qp:启动小程序
+loop 直到请求成功
+    qp->server:请求获取openid\nGET /getOpenid
+    server->qps:获取Openid\nGET https://api.q.qq.com/sns/jscode2session
+    server<-qps:返回请求结果
+    qp<-server:透传请求结果
+    qp->qp:解析请求结果
+end
+qp->qp:存储openid，检查用户信息授权
+alt 未授权
+    qp->qp:调起授权页
+else 已授权
+    qp->qp:获取用户信息(头像，昵称)
+    qp->server:请求更新用户信息，获取业务信息\nPOST /updateAccount
+    server->db:更新用户信息
+    server<--db
+    server->db:查询用户业务信息
+    server<-db:返回用户业务信息
+    qp<-server:封装并返回用户业务信息和基础信息
+    qp->qp:存储业务信息，进入主界面
+    user<--qp
+end
+==APP校验登录态==
+user->app:启动app
+app->app:初始化QQ SDK，检查是否已有用户信息
+alt 有用户信息
+    app->server:更新用户信息，获取业务信息\nPOST /updateAccount
+    server->db:更新用户信息
+    server->db:查询用户业务信息
+    server<-db:返回用户业务信息
+    app<-server:封装并返回用户业务信息和基础信息
+    app->qs:调用QQ SDK校验登录态
+    app<-qs:返回校验结果
+    alt 校验成功
+        app->app:跳转到主页
+    else 校验失败
+        app->app:跳转到登录页
+    end
+else 无用户信息
+    app->app:跳转到登录页
+end
+user<--app
+==APP登录==
+user->app:进入登录页
+app->app:点击登录按钮调起QQ授权页
+app->qs:请求授权登录
+app<-qs:返回授权结果
+alt 授权成功
+    app->server:更新用户信息，获取业务信息\nPOST /updateAccount
+    server->db:更新用户信息
+    server->db:查询用户业务信息
+    server<-db:返回用户业务信息
+    app<-server:封装并返回用户业务信息和基础信息
+    app->app:跳转到主页
+end
+user<--app
+==管理员平台登录==
+user->admin:进入管理员平台登录页\n输入用户名、密码、验证码\n点击“ 登录 ”按钮
+admin->server:请求登录\nPOST /adminLogin
+server->db:校验用户名和密码
+server<-db:返回校验结果
+alt 校验通过
+server->server:生成用户token
+server->db:更新用户token
+admin<-server:返回成功响应和用户token
+admin->admin:保存用户token\n跳转到平台主页
+admin->server:请求获取班级管理员信息\nGET /adminGetInfo
+server->server:校验参数合法性
+server->db:查询管理员信息
+server<-db:返回结果
+admin<-server:返回数据
+admin->admin:将相关信息存储到本地存储
+else 校验未通过
+admin<-server:返回失败响应
+admin->admin:提示登录结果
+end
+user<--admin
+@enduml

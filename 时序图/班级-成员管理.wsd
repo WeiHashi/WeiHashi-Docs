@@ -1,0 +1,45 @@
+@startuml 班级-成员管理
+actor "User" as user
+participant "管理员平台" as admin
+participant "Server" as server
+participant "MySQL" as db
+==获取成员列表==
+user->admin:登录管理员平台\n进入“ 成员管理 ”页面
+admin->server:请求成员列表\nGET /adminGetMemberList
+server->db:查询成员列表
+server<-db:返回结果
+server->db:匹配查询成员身份信息
+server<-db:返回结果
+server->server:封装列表数据
+admin<-server:返回数据
+admin->admin:解析数据并展示列表
+user<--admin
+==将成员设为班干部==
+user->admin:登录管理员平台\n进入“ 成员管理 ”页面\n开启或关闭班干部开关
+admin->server:请求设置或取消班干部\nPUT /adminSetCadre
+server->db:查询当前班干部人数
+server<-db:返回结果
+alt 请求设置班干部且当前班干部人数已达8人
+    admin<-server:返回班干部人数已达上限响应
+else
+    server->db:更新班干部标志
+    server<--db
+    admin<-server:返回成功响应
+end
+admin->admin:提示请求结果
+alt 请求未成功
+    admin->admin:刷新成员列表\n……
+end
+user<--admin
+==移除成员==
+user->admin:登录管理员平台\n进入“ 成员管理 ”页面\n点击“ 移出本班 ”并确认
+admin->server:请求移除成员\nDELETE /adminDeleteMember/用户openid
+server->db:删除成员班级关联信息
+server<--db
+admin<--server
+admin->admin:提示请求结果
+alt 请求成功
+    admin->admin:刷新成员列表\n……
+end
+user<--admin
+@enduml

@@ -1,0 +1,64 @@
+@startuml 账户-后台账户管理
+actor "User" as user
+participant "超管平台" as su
+participant "Server" as server
+participant "MySQL" as db
+==生成账号==
+user->su:登录超管平台\n进入“ 后台账户管理 ”页面\n输入名称\n选择账号类型\n如账号类型为班级需要选择所属学院\n点击“ 生成账号 ”按钮
+su->server:请求生成账号\nPOST /suAddAdmin
+server->server:生成账号id、用户名、密码\n检查账号类型合法性
+server->db:根据账号类型保存账号信息
+server<--db
+su<-server:返回成功响应
+su->su:展示账号信息
+user<--su
+==获取学院列表==
+user->su:登录超管平台\n进入“ 后台账户管理 ”页面
+su->server:请求获取学院列表\nGET /suGetInstituteList
+server->db:查询学院列表
+server<-db:返回结果
+su<-server:返回数据
+su->su:渲染学院列表
+user<--su
+==修改学院账号密码==
+user->su:登录超管平台\n进入“ 后台账户管理 ”页面\n修改学院账号密码
+su->server:请求修改学院账号密码\nPUT /suUpdateInstitute
+server->db:修改学院账号密码
+server<--db
+su<--server
+su->su:提示修改结果
+user<--su
+==获取班级列表==
+user->su:登录超管平台\n进入“ 后台账户管理 ”页面\n点击“ 班级账号管理 ”按钮
+su->server:请求获取班级列表\nGET /suGetClassListOfInstitute
+server->db:查询班级总数
+server<-db:返回结果
+server->db:查询指定页班级列表数据
+server<-db:返回结果
+server->server:封装数据
+su<-server:返回数据
+su->su:渲染班级列表
+user<--su
+==修改班级账号密码==
+user->su:登录超管平台\n进入“ 后台账户管理 ”页面\n修改班级账号密码
+su->server:请求修改班级账号密码\nPUT /suUpdateClass
+server->db:修改班级账号密码
+server<--db
+su<--server
+su->su:提示修改结果
+user<--su
+==删除班级账号==
+user->su:登录超管平台\n进入“ 后台账户管理 ”页面\n点击“ 删除 ”按钮并确认
+su->server:请求删除班级账号\nDELETE /suDeleteAdmin/班级id
+server->db:删除账号下所有问卷
+server<--db
+server->db:删除账号下所有通知
+server<--db
+server->db:删除账号下所有用户关联关系
+server<--db
+server->db:删除账号记录
+server<--db
+su<--server
+su->su:提示删除结果
+user<--su
+@enduml

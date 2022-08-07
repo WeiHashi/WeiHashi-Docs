@@ -1,0 +1,18 @@
+@startuml 账户-绑定教务平台
+actor "User" as user
+participant "QQ小程序/Android APP" as qp
+participant "Server" as server
+participant "教务平台Server" as jw
+user->qp:进入个人页\n点击“ 绑定教务平台 ”\n输入教务平台账号和密码\n点击“  绑定  ”
+qp->server:请求登录教务平台
+server->jw:请求登录接口
+server<-jw:返回结果页面
+server->server:解析教务平台页面登录结果\n封装登录响应
+qp<-server:返回登录响应
+alt 登录成功
+    qp->qp:存储学号、密码、cookie、姓名\n提示绑定成功
+else 登录失败
+    qp->qp:提示失败原因
+end
+user<--qp
+@enduml

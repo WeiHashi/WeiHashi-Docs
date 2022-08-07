@@ -1,0 +1,93 @@
+@startuml 消息-通知管理
+actor "User" as user
+participant "管理员平台" as admin
+participant "超管平台" as su
+participant "Server" as server
+participant "MySQL" as db
+==管理员平台获取问卷列表==
+user->admin:登录管理员平台\n进入“ 问卷管理 ”页面
+admin->server:请求通知列表\nGET /adminGetQuestionnaireList
+server->db:查询班级名称
+server<-db:返回班级名称
+server->db:查询问卷列表
+server<-db:返回问卷时列表
+server->server:封装列表数据
+admin<-server:返回数据
+admin->admin:解析并展示列表
+user<--admin
+==管理员平台修改问卷==
+user->admin:修改问卷
+admin->server:请求修改问卷\nPUT /adminUpdateQuestionnaire
+server->db:更新对应内容
+server<--db
+admin<--server
+admin->admin:提示修改结果
+user<--admin
+==管理员平台置顶问卷==
+user->admin:开启问卷置顶开关
+admin->server:请求置顶或取消置顶\nPUT /adminSetQuestionnaireTop
+server->db:查询用户已置顶通知和问卷数量
+server<-db:返回已置顶总数
+alt 请求置顶且置顶通知和问卷总数已达3条
+    admin<-server:返回置顶数量已达上限响应
+else
+    server->db:更新置顶状态
+    server<--db
+    admin<-server:返回成功响应
+end
+user<--admin
+==管理员平台删除问卷==
+user->admin:点击“ 删除 ”并确认
+admin->server:请求删除问卷\nDELETE /adminDeleteQuestionnaire/问卷id
+server->db:删除问卷提交记录
+server<--db
+server->db:删除问卷
+server<--db
+admin<--server
+admin->admin:提示请求结果
+alt 请求成功
+    admin->admin:刷新列表\n……
+end
+user<--admin
+==超管平台获取问卷列表==
+user->su:登录超管平台\n进入“ 问卷管理 ”页面
+su->server:请求问卷列表\nGET /suGetQuestionnaireList
+server->db:查询问卷列表
+server<-db:返回列表
+server->server:解析发布者id
+server->db:匹配发布者信息
+server<-db:返回信息
+server->server:封装列表数据
+su<-server:返回数据
+su->su:解析并展示列表
+user<--su
+==超管平台修改问卷==
+user->su:修改问卷
+su->server:请求修改问卷\nPUT /suUpdateQuestionnaire
+server->db:更新对应内容
+server<--db
+su<--server
+su->su:提示修改结果
+user<--su
+==超管平台置顶问卷==
+user->su:开启问卷置顶开关
+su->server:请求置顶或取消置顶\nPUT /suSetQuestionnaireTop
+server->db:更新置顶状态
+server<--db
+su<--server
+su->su:提示请求结果
+user<--su
+==超管平台删除问卷==
+user->su:点击“ 删除 ”并确认
+su->server:请求删除问卷\nDELETE /suDeleteQuestionnaire/问卷id
+server->db:删除问卷提交记录
+server<--db
+server->db:删除问卷
+server<--db
+su<--server
+su->su:提示请求结果
+alt 请求成功
+    su->su:刷新列表\n……
+end
+user<--su
+@enduml

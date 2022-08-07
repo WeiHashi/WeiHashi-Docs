@@ -1,0 +1,24 @@
+@startuml 消息-获取消息
+actor "User" as user
+participant "QQ小程序/Android APP" as qp
+participant "Server" as server
+participant "MySQL" as db
+user->qp:进入消息页
+alt QQ小程序
+    qp->server:请求获取消息列表\nGET /v2/class/messages
+else Android APP
+    qp->server:请求获取消息列表\nGET /getMessages
+end
+alt 请求第一页消息
+    server->db:查询置顶消息列表
+    server<-db:返回结果
+end
+server->db:查询消息列表
+server<-db:返回结果
+server->db:查询消息总数
+server<-db:返回结果
+server->server:封装数据
+qp<-server:返回数据
+qp->qp:渲染消息列表
+user<--qp
+@enduml

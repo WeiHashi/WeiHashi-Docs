@@ -1,0 +1,46 @@
+@startuml 数据统计-数据面板
+actor "User" as user
+participant "管理员平台" as admin
+participant "超管平台" as su
+participant "Server" as server
+participant "MySQL" as db
+participant "Redis" as redis
+==管理员平台数据面板==
+user->admin:登录管理员平台\n进入“ 概览 ”页面
+admin->server:请求获取数据\nGET /adminGetOverview
+server->db:查询班级成员人数
+server<-db:返回数据
+server->db:查询已发布通知数
+server<-db:返回数据
+server->db:查询已发布问卷数
+server<-db:返回数据
+server->server:封装数据
+admin<-server:返回数据
+admin->admin:将数据填充到页面
+user<--admin
+==超管平台数据面板==
+user->su:登录管理员平台\n进入“ 概览 ”页面
+su->server:请求获取数据\nGET /v2/su/overview
+server->db:查用户总数
+server<-db:返回数据
+server->db:查询已绑定教务平台人数
+server<-db:返回数据
+server->redis:查询今日日活人数
+server<-redis:返回数据
+server->redis:查询今日日启动次数
+server<-redis:返回数据
+server->db:查询已发布通知总数
+server<-db:返回数据
+server->db:查询已发布问卷总数
+server<-db:返回数据
+server->db:查询班级总数
+server<-db:返回数据
+server->redis:查询近一周日活人数
+server<-redis:返回数据
+server->redis:查询近一周日启动次数
+server<-redis:返回数据
+server->server:封装数据
+su<-server:返回数据
+su->su:将数据填充到页面或渲染到图表
+user<--su
+@enduml

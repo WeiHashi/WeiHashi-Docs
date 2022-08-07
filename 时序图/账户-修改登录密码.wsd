@@ -1,0 +1,20 @@
+@startuml 账户-修改登录密码
+actor "User" as user
+participant "管理员平台" as admin
+participant "Server" as server
+participant "MySQL" as db
+user->admin:登录管理员平台\n点击右上角的班级名称\n选择修改密码\n在弹出的对话框中输入原密码和新密码\n点击“ 确定 ”
+admin->server:请求修改密码\nPUT /adminUpdatePassword
+server->server:校验参数合法性
+server->db:校验原密码
+server<-db:返回校验结果
+alt 校验通过
+server->db:将密码更新为新密码
+server<--db
+admin<-server:返回修改成功响应
+else 校验不通过
+admin<-server:返回原密码错误响应
+admin->admin:展示错误提示
+end
+user<--admin
+@enduml

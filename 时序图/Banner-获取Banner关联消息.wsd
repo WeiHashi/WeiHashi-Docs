@@ -1,0 +1,22 @@
+@startuml Banner-获取Banner关联消息
+actor "User" as user
+participant "QQ小程序/Android APP" as qp
+participant "Server" as server
+participant "MySQl" as db
+user->qp:启动小程序/APP\n点击Banner
+qp->server:请求获取关联消息\nGET /getBannerContent
+server->server:判断关联消息类型(通知/问卷)
+alt 通知
+server->db:查询通知内容
+else 问卷
+server->db:查询问卷内容
+end
+server<--db
+alt 未查询到结果
+qp<-server:返回消息不存在响应
+else
+qp<-server:返回数据
+qp->qp:解析数据\n跳转到详情页展示消息
+end
+user<--qp
+@enduml

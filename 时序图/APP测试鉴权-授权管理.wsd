@@ -1,0 +1,34 @@
+@startuml APP测试鉴权-授权管理
+actor "User" as user
+participant "超管平台" as su
+participant "Server" as server
+participant "MySQL" as db
+==获取待授权列表==
+user->su:登录超管平台\n进入“ 测试授权 ”页面
+su->server:请求获取待授权版本列表\nGET /v2/su/testPermission/versions
+server->db:查询待授权版本列表
+server<-db:返回结果
+su<-server:返回数据
+su->su:将版本列表渲染到下拉菜单
+su->server:请求待授权列表\n/v2/su/testPermission
+alt 版本字段为“ latest ”
+server->db:查询最新版版本号
+server<-db:返回结果
+end
+server->db:查询对应版本待授权总数
+server<-db:返回结果
+server->db:查询对应版本待授权列表
+server<-db:返回结果
+server->server:封装数据
+su<-server:返回数据
+su->su:解析数据并渲染列表
+user<--su
+==授权/取消授权==
+user->su:登录超管平台\n进入“ 测试授权 ”页面\n开启或关闭授权开关
+su->server:请求授权/取消授权\nPUT /v2/su/testPermission
+server->db:更新权限标志
+server<--db
+su<--server
+su->su:提示请求结果
+user<--su
+@enduml

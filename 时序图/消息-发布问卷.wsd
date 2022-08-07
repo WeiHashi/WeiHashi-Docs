@@ -1,0 +1,43 @@
+@startuml 消息-发布问卷
+actor "User" as user
+participant "QQ小程序" as qp
+participant "管理员平台" as admin
+participant "超管平台" as su
+participant "Server" as server
+participant "MySQL" as db
+==QQ小程序发布问卷==
+user->qp:进入“ 发布问卷 ”页面\n编写标题和描述\n新增问题，选择问题类型\n如新增选择题添加至少2个选项\n点击“ 发布 ”
+qp->qp:检查是否已绑定教务平台
+alt 未绑定
+    qp->qp:引导绑定教务平台\n……
+else 已绑定
+    qp->server:请求发布问卷\nPOST /addQuestionnaire
+    server->server:\n生成问卷id\n设置发布范围
+    server->db:保存问卷
+    server<--db
+    qp<--server
+    qp->qp:提示发布结果
+    user<--qp
+end
+==管理员平台发布问卷==
+user->admin:登录管理员平台\n进入“ 发布问卷 ”页面\n编写标题和描述,选择是否置顶\n新增问题，选择问题类型\n如新增选择题添加至少2个选项\n点击“ 立即发布 ”
+admin->server:请求发布问卷\nPOST /adminAddQuestionnaire
+server->server:\n生成问卷id\n设置发布范围\n检查用户发布置顶数量
+alt 置顶且已发布置顶通知和问卷总数已达3条
+    server->server:强制取消置顶
+end
+server->db:保存问卷
+server<--db
+admin<-server:返回发布状态
+admin->admin:提示发布结果
+user<--admin
+==超管平台发布问卷==
+user->su:登录超管平台\n进入“ 发布问卷 ”页面\n编写标题和描述,选择是否置顶\n新增问题，选择问题类型\n如新增选择题添加至少2个选项\n点击“ 立即发布 ”
+su->server:请求发布问卷\nPOST /suAddQuestionnaire
+server->server:配置超管和问卷信息
+server->db:保存问卷
+server<--db
+su<--server
+su->su:提示发布结果
+user<--su
+@enduml

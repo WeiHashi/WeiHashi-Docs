@@ -1,0 +1,32 @@
+@startuml 消息-提交问卷
+actor "User" as user
+participant "QQ小程序" as qp
+participant "Server" as server
+participant "MySQL" as db
+==QQ小程序获取问卷已填写记录==
+user->qp:进入消息页\n点击问卷项目
+qp->server:请求获取已填写记录\nGET /getSavedCollection
+server->db:查询已填写记录
+server<-db:返回结果
+alt 无记录
+qp<-server:返回无记录响应
+else
+qp<-server:返回记录
+qp->qp:解析记录并渲染到表单
+end
+user<--qp
+==QQ小程序提交问卷==
+user->qp:进入消息页\n点击问卷项目\n填写表单\n点击“ 提交 ”
+alt 已有填写记录
+qp->server:请求覆盖原记录\nPUT /coverCollection
+server->db:更新记录
+server<--db
+else 提交新记录
+qp->server:请求提交问卷\nPOST /submitQuestionnaire
+server->db:保存记录
+server<--db
+end
+qp<--server
+qp->qp:提示提交/覆盖结果
+user<--qp
+@enduml

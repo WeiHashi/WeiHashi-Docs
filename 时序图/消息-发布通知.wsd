@@ -1,0 +1,80 @@
+@startuml 消息-发布通知
+actor "User" as user
+participant "QQ小程序" as qp
+participant "管理员平台" as admin
+participant "超管平台" as su
+participant "Server" as server
+participant "MySQL" as db
+participant "Redis" as redis
+participant "本地存储" as local
+participant "COS对象存储" as cos
+==QQ小程序发布通知==
+user->qp:进入“ 发布通知 ”页面\n编写标题和正文,选择分类\n点击“ 发布 ”
+qp->qp:检查是否已绑定教务平台
+alt 未绑定
+    qp->qp:引导绑定教务平台\n……
+else 已绑定
+    qp->server:请求发布通知\nPOST /addNotice
+    server->server:\n生成通知id\n设置发布范围
+    server->db:保存通知
+    server<--db
+    qp<--server
+    qp->qp:提示发布结果
+    user<--qp
+end
+==管理员平台发布通知==
+user->admin:登录管理员平台\n进入“ 发布通知 ”页面\n编写标题和正文,选择分类和是否置顶\n点击“ 立即发布 ”
+admin->server:请求发布通知\nPOST /adminAddNotice
+server->server:\n生成通知id\n设置发布范围\n检查用户发布置顶数量
+alt 置顶且已发布置顶通知和问卷总数已达3条
+    server->server:强制取消置顶
+end
+server->db:保存通知
+server<--db
+admin<-server:返回发布状态
+admin->admin:提示发布结果
+user<--admin
+==超管平台正文插入图片==
+user->su:登录超管平台\n进入“ 发布通知 ”页面\n点击“ 图片 ”图标\n选择“ 上传图片 ”或“外链图片”
+alt 外链图片
+    user->su:填写图片链接
+    su->su:将图片插入正文
+else 上传图片
+    su->su:调起文件选择器
+    user->su:选择图片
+    su->server:上传图片\nPOST /v2/su/cache/upload
+    server->server:编码文件名
+    server->local:将图片临时存储到本地存储
+    server<--local
+    server->server:生成临时文件链接 /cache/image/文件名
+    server->redis:将临时文件链接格式化后作为key存入redis并设置过期时间为1小时
+    su<-server:返回上传结果
+    alt 上传成功
+        su->su:插入临时图片到正文
+        su->server:请求图片\nGET /cache/image/文件名
+        server->server:构造文件路径
+        server->local:检查文件是否存在
+        server<--local
+        alt 存在
+            su<-server:返回图片
+        else 不存在
+            su<-server:返回404
+        end
+    else 上传失败
+        su->su:插入占位图片到正文
+    end
+end
+user<--su
+==超管平台发布通知==
+user->su:登录超管平台\n进入“ 发布通知 ”页面\n编写标题和正文,选择是否置顶\n点击“ 立即发布 ”
+su->server:请求发布通知\nPOST /v2/su/notice/publish
+server->server:解析前端编写的正文
+server->cos:调用COS Java SDK将正文中的临时图片文件持久化存储到COS对象存储
+server<--cos
+server->server:将正文中的临时链接替换成永久链接\n将正文封装成json\n配置超管和通知信息
+server->db:保存通知
+server<--db
+su<--server
+su->su:提示发布结果
+user<--su
+@enduml

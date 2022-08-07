@@ -1,0 +1,33 @@
+@startuml 校园地图-地图展示
+actor "User" as user
+participant "Andorid APP" as app
+==百度地图SDK初始化==
+user->app:启动APP
+app->app:初始化百度地图SDK和地图坐标类型
+user<--app
+==显示地图==
+user->app:进入主页\n点击“ 校园地图 ”版块
+app->app:检查定位权限
+alt 无权限
+    app->app:弹窗申请用户授予权限
+    alt 拒绝
+        user<--app
+    end
+end
+app->app:进入地图页\n初始化渲染地图组件\n从本地存储获取POI数据并渲染到POI列表\n初始化定位
+alt 用户当前位于江北校区或江南校区
+    app->app:定位显示用户当前位置
+else 用户位于校外
+    app->app:定位显示江北校区行知楼
+end
+user<--app
+==导航==
+user->app:进入地图页\n选中POI列表项
+app->app:调用百度地图SDK搜寻步行路线
+alt 无路线
+    app->app:定位切换到POI位置并显示标注
+else 有路线
+    app->app:定位切换到POI位置并显示路线和标注
+end
+user<--app
+@enduml

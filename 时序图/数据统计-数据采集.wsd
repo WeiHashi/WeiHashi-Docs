@@ -1,0 +1,16 @@
+@startuml 数据采集
+actor "User" as user
+participant "QQ小程序/Android APP" as qp
+participant "Server" as server
+participant "Redis" as redis
+user->qp:启动小程序/APP
+qp->qp:……
+qp->server:更新用户信息，获取业务信息\nPOST /updateAccount
+server->redis:将用户openid添加到日活HyperLogLog字段
+server<--redis
+server->redis:日启动计数值+1
+server<--redis
+server->server:……
+qp<-server:返回业务响应
+user<--qp
+@enduml

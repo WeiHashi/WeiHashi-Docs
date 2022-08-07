@@ -1,0 +1,63 @@
+@startuml Banner-Banner管理
+actor "User" as user
+participant "超管平台" as su
+participant "Server" as server
+participant "MySQL" as db
+participant "COS对象存储" as cos
+==上传图片==
+user->su:登录超管平台\n进入“ 轮播管理页面 ”\n点击“ 上传 ”
+su->su:调起文件选择器
+user<--su
+user->su:选择图片
+su->server:请求上传图片\nPOST /suUploadBanner
+server->server:检查文件
+alt 文件为空
+su<-server:返回500错误码
+else
+server->cos:将图片保存到COS对象存储
+server<--cos
+server->db:生成Banner id\n保存Banner信息
+su<-server:返回200错误码
+su->su:刷新Banner列表
+end
+user<--su
+==获取Banner列表==
+user->su:登录超管平台\n进入“ 轮播管理页面 ”
+su->server:请求获取Banner列表\nGET /suGetBannerList
+server->db:查询Banner总数
+server<-db:返回结果
+server->db:查询Banner列表
+server<-db:返回结果
+server->server:封装数据
+su<-server:返回数据
+su->su:解析数据并渲染列表
+user<--su
+==修改Banner==
+user->su:登录超管平台\n进入“ 轮播管理页面 ”\n修改链接id或优先级
+su->server:请求修改Banner\nPUT /suUpdateBanner
+alt 修改字段为链接id
+server->db:更新type字段
+server<--db
+end
+server->db:更新对应字段
+server<--db
+su<--server
+su->su:提示修改结果
+==启用/禁用Banner==
+user->su:登录超管平台\n进入“ 轮播管理页面 ”\n点击启用开关
+su->server:请求启用/禁用Banner\nPUT /suEnableBanner
+server->db:修改启用标志
+server<--db
+su<--server
+su->su:提示请求结果
+==删除Banner==
+user->su:登录超管平台\n进入“ 轮播管理页面 ”\n点击“ 删除 ”并确认
+su->server:请求删除Banner\nDELETE /suDeleteBanner/Banner id
+server->cos:删除图片
+server<--cos
+server->db:删除Banner
+server<--db
+su<--server
+su->su:提示请求结果
+user<-su
+@enduml

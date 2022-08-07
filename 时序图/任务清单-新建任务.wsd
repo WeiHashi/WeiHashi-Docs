@@ -1,0 +1,27 @@
+@startuml 任务清单-新建任务
+actor "User" as user
+participant "QQ小程序" as qp
+participant "Server" as server
+participant "MySQL" as db
+user->qp:进入任务清单页\n点击“ + ”\n填选任务名称、日期、时间和提醒方式\n点击“ 添加 ”
+alt 设置提醒
+    alt 模板消息提醒且设定时间大于一周后
+        qp->qp:提示时间过长
+        user<--qp
+    end
+    alt 邮箱提醒
+        qp->qp:检查邮箱绑定状态
+        alt 未绑定
+            qp->qp:提示绑定
+            user<--qp
+        end
+    end
+    qp->server:请求新建任务\nPOST /addTask
+    server->server:生成任务id
+    server->db:保存任务
+    server<--db
+    qp<--server
+end
+qp->qp:保存任务并刷新任务列表
+user<--qp
+@enduml

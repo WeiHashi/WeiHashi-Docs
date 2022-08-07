@@ -1,0 +1,27 @@
+@startuml APP测试鉴权-权限验证
+actor "User" as user
+participant "Android APP" as app
+participant "权限申请Web页面" as apply
+participant "待审核Web页面" as wait
+participant "已提交Web页面" as submitted
+participant "Server" as server
+participant "MySQL" as db
+user->app:启动APP\n点击提示弹窗中的“ 去申请 ”
+app->app:跳转到浏览器页面
+app->server:请求页面\nGET /testApply
+server->db:查询提交记录
+server<-db:返回数据
+alt 有记录
+wait<-server:返回待审核页面
+user<--wait
+else 无记录
+apply<-server:返回表单页
+user<--apply
+user->apply:填写表单\n点击“ 提交申请 ”
+apply->server:提交测试申请\nPOST /testApply
+server->db:保存表单
+server<--db
+submitted<-server:返回已提交页面
+user<--submitted
+end
+@enduml

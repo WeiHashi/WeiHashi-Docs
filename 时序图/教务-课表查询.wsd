@@ -1,0 +1,43 @@
+@startuml 教务-课表查询
+actor "User" as user
+participant "QQ小程序/Android APP" as qp
+participant "Server" as server
+participant "教务平台Server" as jw
+user->qp:进入课表页\n点击导入按钮/下拉刷新
+qp->qp:检测教务平台绑定状态
+alt 未绑定
+    qp->qp:跳转到个人页引导绑定\n……
+else 已绑定
+    group 该部分仅Android APP执行
+        qp->qp:检测是否存在手动添加的课程
+        alt 存在
+            qp->qp:弹窗提示用户确认刷新
+            alt 取消刷新
+                user<--qp
+            end
+        end
+    end
+    qp->qp:从本地存储获取请求cookie
+    qp->server:尝试获取课表数据\nGET /getDailyLessons
+    server->jw:请求课表页面
+    server<-jw:返回页面
+    alt 页面标题为“ 登录 ”
+        qp<-server:返回需要重新登录响应
+        qp->qp:重新执行登录流程\n使用新的cookie请求课表页面\n……
+    else 请求成功
+        server->server:解析课表页面\n生成课程背景色\n将课表数据封装成json
+        alt 解析成功
+            qp<-server:返回成功响应和课表数据
+            qp->qp:渲染并存储课表数据
+        else 没有课表数据
+            qp<-server:返回无数据响应
+        else 解析失败
+            server->jw:请求教务平台用户桌面
+            server<-jw:返回页面
+            server->server:解析姓名\n存档解析失败的课表页面
+            qp<-server:返回解析失败响应
+        end
+    end
+end
+user<--qp
+@enduml

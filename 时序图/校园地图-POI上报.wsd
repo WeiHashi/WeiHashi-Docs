@@ -1,0 +1,24 @@
+@startuml 校园地图-POI上报
+actor "User" as user
+participant "Android APP" as app
+participant "POI上报网页" as poi
+participant "Server" as server
+participant "MySQL" as db
+user->app:进入地图页\n点击右上角“ 上传 ”图标
+app->app:调起浏览页\n初始化X5WebView
+app->poi:渲染POI上报页面 /poiReport
+user<--poi
+user->poi:填写POI信息并点击“ 上报 ”
+poi->server:提交数据\nPOST /poiReport
+server->db:检查用户当日上报数量是否达到5条
+server<-db:返回结果
+alt 已达5条
+    poi<-server:提示当日上报数量已达上限
+else 未达5条
+    server->server:生成数据id
+    server->db:存储上报信息
+    server<--db
+    poi<-server:提示上报成功
+end
+user<--poi
+@enduml

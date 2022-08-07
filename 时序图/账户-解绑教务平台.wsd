@@ -1,0 +1,28 @@
+@startuml 账户-绑定教务平台
+actor "User" as user
+participant "QQ小程序" as qp
+participant "Android APP" as app
+participant "Server" as server
+participant "教务平台Server" as jw
+==小程序解绑教务平台==
+user->qp:进入个人页\n已绑定状态下点击“ 绑定教务平台 ”
+qp->server:请求登录教务平台
+server->jw:请求登录接口
+server<-jw:返回结果页面
+server->server:解析教务平台页面登录结果\n封装登录响应
+qp<-server:返回登录响应
+alt 登录成功
+    qp->qp:展示存储的姓名和学号信息
+    user->qp:点击解绑按钮并确认
+qp->server:请求清除数据
+qp<--server
+end
+qp->qp:清空存储的全部教务数据，展示输入界面
+user<--qp
+==APP解绑教务平台==
+user->app:进入个人页\n已绑定状态下点击“ 绑定教务平台 ”
+    app->app:展示存储的姓名和学号信息
+    user->app:点击解绑按钮并确认
+app->app:清空存储的全部教务数据，展示输入界面
+user<--app
+@enduml

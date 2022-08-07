@@ -1,0 +1,17 @@
+@startuml 账户-清除数据
+actor "User" as user
+participant "QQ小程序/Android APP" as qp
+participant "Server" as server
+==清除单项数据==
+user->qp:进入设置页\n点击清除数据\n选择要清除的项目并确认
+qp->qp:清除对应的业务数据存储
+user<--qp
+==清除全部数据==
+user->qp:进入设置页\n点击清除全部数据并确认
+group 该部分仅QQ小程序执行
+qp->server:请求清除数据\nPUT /clearInfo
+qp<--server
+end
+qp->qp:清空本地存储
+user<--qp
+@enduml

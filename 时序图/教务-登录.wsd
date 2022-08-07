@@ -1,0 +1,25 @@
+@startuml 教务-登录
+actor "User" as user
+participant "QQ小程序/Android APP" as qp
+participant "Server" as server
+participant "MySQL" as db
+participant "教务平台Server" as jw
+user->qp:……
+qp->server:请求登录教务平台
+server->jw:请求登录接口
+server<-jw:返回页面
+alt 页面含有“ 用户名或密码错误 ”字样
+    qp<-server:返回密码错误响应
+    qp->qp:……
+    user<--qp
+else 登录成功
+    server->jw:请求教务平台用户桌面
+    server<-jw:返回页面
+    server->server:解析姓名字段\n将请求cookie格式化为json字符串
+    server->db:更新账户与教务平台账号的绑定关系
+    server<--db
+    qp<-server:返回姓名和cookie
+    qp->qp:……
+    user<--qp
+end
+@enduml

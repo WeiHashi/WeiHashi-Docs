@@ -1,0 +1,36 @@
+@startuml 账户-绑定邮箱
+actor "User" as user
+participant "QQ小程序" as qp
+participant "Server" as server
+participant "MySQL" as db
+user->qp:进入个人页\n点击“ 绑定邮箱 ”\n输入邮箱地址\n点击“ 获取验证码 ”
+qp->server:请求获取邮件验证码\nGET /getEmailCode
+server->server:生成6位随机验证码\n填充到邮件模板\n调用邮件服务发送邮件到目标邮箱
+alt 发送成功
+    server->db:存储邮件验证码
+    server<--db
+    qp<-server:返回成功响应
+    qp->qp:开始一分钟倒计时
+    alt 需要重新获取验证码
+    user->qp:等待倒计时结束再次执行以上流程\n……
+    else 进行绑定
+    user->qp:点击“ 绑定 ”
+    qp->server:请求校验验证码并绑定\nPOST /bindEmail
+    server->db:匹配查询用户openid和验证码
+    server<-db:返回查询结果
+    alt 校验成功
+    server->db:更新用户绑定邮箱字段\n删除用户邮箱验证码
+    server<--db
+    qp<-server:返回成功响应
+    else 校验失败
+    qp<-server:返回失败响应
+    end
+    qp->qp:展示绑定结果
+    user<--qp
+    end
+else 发送失败
+    qp<-server:返回失败响应
+    qp->qp:展示失败提示
+    user<--qp
+end
+@enduml

@@ -1,0 +1,16 @@
+@startuml 账户-解绑邮箱
+actor "User" as user
+participant "QQ小程序" as qp
+participant "Server" as server
+participant "MySQL" as db
+user->qp:进入个人页\n已绑定状态下点击“ 绑定邮箱 ”
+qp->qp:展示已绑定邮箱
+user<--qp
+user->qp:点击“ 解绑 ”并确认
+qp->server:请求解绑邮箱\nPOST /unbindMail
+server->db:清空用户绑定邮箱字段
+server<--db
+qp<--server
+qp->qp:展示请求结果
+user<--qp
+@enduml

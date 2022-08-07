@@ -1,0 +1,37 @@
+@startuml 班级-加入班级
+actor "User" as user
+participant "管理员平台" as admin
+participant "Server" as server
+participant "MySQL" as db
+user->admin:登录管理员平台\n进入“ 成员管理 ”页面\n输入成员id\n点击“ 添加成员 ”
+admin->server:请求获取成员信息\nGET /adminGetMemberInfoBeforeAdd
+server->db:查询成员的班级信息
+server<-db:返回结果
+alt 成员当前未加入班级
+    server->db:查询成员身份信息
+    server<-db:返回结果
+    alt 未查询到身份信息
+        admin<-server:返回找不到用户响应
+    else
+        admin<-server:返回成员身份信息
+        admin->admin:弹窗提示确认信息
+        user<--admin
+        user->admin:确认成员信息
+        admin->server:请求添加成员\nPOST /adminConfirmAddMember
+        server->db:保存成员信息
+        server<--db
+        admin<--server
+        admin->admin:提示请求结果
+        alt 请求成功
+            admin->admin:刷新成员列表\n……
+        end
+        user<--admin
+    end
+else 成员所属班级为当前班级
+    admin<-server:返回成员已存在响应
+else
+    admin<-server:返回成员已加入其他班级响应
+end
+admin->admin:提示请求结果
+user<--admin
+@enduml

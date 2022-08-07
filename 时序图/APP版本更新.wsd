@@ -1,0 +1,19 @@
+@startuml APP版本更新
+actor "User" as user
+participant "Android APP" as app
+participant "Server" as server
+user->app:进入个人页\n点击“ 版本更新 ”
+app->server:请求更新信息\nGET /update.php
+server->server:检查APP版本号是否为最新
+alt 已经是最新版本
+app<-server:返回无更新响应
+user<--app
+else 有版本更新
+app<-server:返回最新版本版本号、下载地址、校验码、更新日志等信息
+app->app:弹窗提示用户更新
+user<--app
+user->app:点击“ 更新 ”
+app->app:调用系统下载器下载更新
+user<--app
+end
+@enduml

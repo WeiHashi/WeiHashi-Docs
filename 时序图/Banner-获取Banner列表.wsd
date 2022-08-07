@@ -1,0 +1,13 @@
+@startuml Banner-获取Banner列表
+actor "User" as user
+participant "QQ小程序/Android App" as qp
+participant "Server" as server
+participant "MySQL" as db
+user->qp:启动小程序/APP\n进入主页
+qp->server:请求获取Banner列表\nGET /getBanner
+server->db:查询Banner列表
+server<-db:返回结果
+qp<-server:返回数据
+qp->qp:解析数据并渲染Banner
+user<--qp
+@enduml

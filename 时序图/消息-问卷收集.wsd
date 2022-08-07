@@ -1,0 +1,51 @@
+@startuml 消息-问卷收集
+actor "User" as user
+participant "管理员平台" as admin
+participant "超管平台" as su
+participant "Server" as server
+participant "MySQL" as db
+==管理员平台获取记录列表==
+user->admin:登录管理员平台\n进入“ 问卷回收 ”页面\n点击“ 查看填写情况 ”
+admin->server:请求获取问卷填写记录\nGET /adminGetQuestionnaireCollection
+server->db:查询记录列表
+server<-db:返回结果
+server->db:查询记录对应的用户姓名
+server<-db:返回结果
+server->server:封装列表数据
+admin<-server:返回数据
+admin->admin:解析并展示列表
+user<--admin
+==管理员平台删除记录==
+user->admin:登录管理员平台\n进入“ 问卷回收 ”页面\n点击“ 查看填写情况 ”\n点击“ 删除 ”并确认
+admin->server:请求删除记录\nDELETE /adminDeleteQuestionnaireCollection/记录id
+server->db:删除记录
+server<--db
+admin<--server
+admin->admin:提示请求结果
+alt 请求成功
+    admin->admin:刷新列表\n……
+end
+user<--admin
+==超管平台获取记录列表==
+user->su:登录超管平台\n进入“ 问卷回收 ”页面\n点击“ 查看填写情况 ”
+su->server:请求获取问卷填写记录\nGET /suGetQuestionnaireCollection
+server->db:查询记录列表
+server<-db:返回结果
+server->db:查询记录对应的用户姓名
+server<-db:返回结果
+server->server:封装列表数据
+su<-server:返回数据
+su->su:解析并展示列表
+user<--su
+==超管平台删除记录==
+user->su:登录超管平台\n进入“ 问卷回收 ”页面\n点击“ 查看填写情况 ”\n点击“ 删除 ”并确认
+su->server:请求删除记录\nDELETE /suDeleteQuestionnaireCollection/记录id
+server->db:删除记录
+server<--db
+su<--server
+su->su:提示请求结果
+alt 请求成功
+    su->su:刷新列表\n……
+end
+user<--su
+@enduml

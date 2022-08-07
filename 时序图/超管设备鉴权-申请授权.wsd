@@ -1,0 +1,37 @@
+@startuml 超管设备鉴权-申请授权
+actor "User" as user
+participant "超管平台" as su
+participant "Android/iOS/Windows/Mac端授权工具" as authTool
+participant "Server" as server
+participant "MySQL" as db
+participant "Redis" as redis
+user->su:进入403页面
+su->su:从本地存储获取设备id\n将设备id拼接到版权声明的url上
+user<--su
+user->su:点击版权声明
+su->authTool:调起Android端授权工具
+authTool->authTool:校验url格式\n获取url中的设备id
+alt url不合法或设备id为空
+    authTool->authTool:显示错误提示
+    user<--authTool
+else
+    authTool->server:请求设备id授权\nGET /v2/device/verify
+    server->db:查询设备列表中是否存在该设备id
+    alt 不存在
+        server->db:将设备id添加到设备列表
+        server<--db
+        authTool<-server:返回待授权响应
+    else
+        server->redis:查询设备id是否存在
+        server<-redis:返回结果
+        alt 不存在
+            authTool<-server:返回待授权响应
+        else
+            server->db:更新设备信息
+            authTool<-server:返回已授权响应
+        end
+    end
+    authTool->authTool:显示授权状态
+    user<--authTool
+end
+@enduml

@@ -1,0 +1,42 @@
+@startuml 教务-课表查询
+actor "User" as user
+participant "QQ小程序/Android APP" as qp
+participant "Server" as server
+participant "教务平台Server" as jw
+user->qp:进入成绩页\n点击“更新成绩数据”/下拉刷新
+qp->qp:检测教务平台绑定状态
+alt 未绑定
+    qp->qp:跳转到个人页引导绑定\n……
+else 已绑定
+    qp->qp:从本地存储获取请求cookie
+    qp->server:尝试获取成绩数据\nGET /grade
+    server->jw:请求成绩页面
+    server<-jw:返回页面
+    alt 页面标题为“ 登录 ”
+        qp<-server:返回需要重新登录响应
+        qp->qp:重新执行登录流程\n使用新的cookie请求成绩页面\n……
+    else 请求成功
+        server->server:解析成绩页面
+        alt 解析失败
+            server->server:存档解析失败的成绩页面
+            qp<-server:返回解析失败响应
+        end
+        server->jw:请求教务平台用户桌面
+        server<-jw:返回页面
+        server->server:解析入学年份
+        server->jw:请求培养方案页面
+        server<-jw:返回页面
+        server->server:解析培养方案数据
+        alt 解析成功
+            server->server:成绩数据和培养方案数据取并集
+        end
+        alt 数据为空:
+            qp<-server:返回无数据响应
+        else
+            qp<-server:返回数据
+            qp->qp:渲染并存储成绩数据
+        end
+    end
+end
+user<--qp
+@enduml

@@ -1,0 +1,60 @@
+@startuml 超管设备鉴权-权限验证
+actor "User" as user
+participant "超管平台" as su
+participant "超管设备管理客户端" as manager
+participant "Server" as server
+participant "Redis" as redis
+==超管设备权限验证==
+user->su:进入超管平台任意页面\n触发接口请求
+su->su:尝试从本地请求获取设备id
+su->server:请求接口
+server->server:超管拦截器尝试从请求Header中取设备id
+alt 能取到设备id
+    server->redis:查询设备id是否存在
+    server<-redis:返回结果
+    alt 存在
+        server->server:放通请求到业务接口\n执行业务逻辑
+        su<-server:业务响应
+        su->su:……
+        user<--su
+    else 不存在
+        su<-server:拦截请求
+    end
+else 取不到设备id
+    server->server:生成设备id
+    su<-server:拦截请求并返回设备id
+end
+su->su:检查响应中是否有设备id
+alt 响应中有设备id
+    su->su:将设备id存储到本地
+end
+su->su:转到403页面
+user<--su
+==超管设备管理客户端权限验证==
+user->manager:启动客户端
+loop 直至验证通过
+    manager->manager:调起指纹传感器
+    user<--manager
+    user->manager:验证指纹
+end
+manager->manager:生成随机数\n使用RSA公钥加密当前时间戳
+manager->server:使用时间戳密文请求设备管理接口
+server->server:设备管理拦截器尝试从Header中获取时间戳密文
+alt 获取不到原文或密文
+    manager<-server:返回403错误
+    manager->manager:弹出错误提示
+    user<--manager
+else
+    server->server:使用RSA私钥解密密文\n比对服务端当前时间戳与客户端时间戳
+    alt 相差大于10秒
+        manager<-server:返回403错误
+        manager->manager:弹出错误提示
+        user<--manager
+    else 相差小于等于10秒
+        server->server:放通请求到接口\n执行业务逻辑
+        manager<-server:返回业务响应
+        manager->manager:……
+        user<--manager
+    end
+end
+@enduml

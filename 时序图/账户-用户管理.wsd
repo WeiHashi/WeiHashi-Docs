@@ -1,0 +1,16 @@
+@startuml 账户-用户管理
+actor "User" as user
+participant "超管平台" as su
+participant "Server" as server
+participant "MySQL" as db
+user->su:登录超管平台\n进入“ 用户管理 ”页面
+su->server:请求获取用户列表\nGET /suGetUserList
+server->db:查询用户总数
+server<-db:返回结果
+server->db:查询用户列表
+server<-db:返回结果
+server->server:封装数据
+su<-server:返回数据
+su->su:渲染用户列表
+user<--su
+@enduml

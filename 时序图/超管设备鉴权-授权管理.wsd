@@ -1,0 +1,32 @@
+@startuml 超管设备鉴权-授权管理
+actor "User" as user
+participant "超管设备管理客户端" as manager
+participant "Server" as server
+participant "MySQL" as db
+participant "Redis" as redis
+==获取设备列表==
+user->manager:启动客户端\n指纹验证通过
+manager->server:请求获取设备列表\nGET /v2/device/list
+server->db:查询设备列表
+server<-db:返回结果
+server->redis:匹配查询设备授权状态
+server<-redis:返回结果
+server->server:封装列表数据
+manager<-server:返回数据
+manager->manager:解析数据并渲染列表
+user<--manager
+==设备授权==
+user->manager:启动客户端\n指纹验证通过\n开启或关闭授权开关
+manager->server:请求授权或取消授权\nPUT /v2/device/allow
+server->server:使用设备id构造key
+alt 授权
+server->redis:将key存入并设置有效期为7天
+server<--redis
+else 取消授权
+server->redis:删除key
+server<--redis
+end
+manager<--server
+manager->manager:提示请求结果
+user<--manager
+@enduml

@@ -1,0 +1,28 @@
+@startuml 教务-手动加课
+actor "User" as user
+participant "QQ小程序/Android APP" as qp
+user->qp:进入课表页\n点击“ + ”\n选择“ 手动添加课程 ”
+group 该部分仅QQ小程序执行
+    qp->qp:检测是否已有课程数据
+    alt 没有课程数据
+        user<--qp
+    end
+end
+user->qp:填选课程信息\n点击“ 添加 ”
+qp->qp:校验课程信息格式\n检测同名课程
+alt 有同名课
+    qp->qp:提示合并到已有课程
+    alt 取消
+        user<--qp
+    end
+end
+qp->qp:检测时间冲突
+alt 有时间冲突
+    qp->qp:提示忽略冲突部分
+    alt 取消
+        user<--qp
+    end
+end
+qp->qp:执行添加/合并
+user<--qp
+@enduml

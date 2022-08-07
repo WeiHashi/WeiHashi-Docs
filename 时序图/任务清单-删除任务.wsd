@@ -1,0 +1,7 @@
+@startuml 任务清单-删除任务
+actor "User" as user
+participant "QQ小程序" as qp
+user->qp:进入任务清单页\n点击任务列表中的任务项\n点击“ 删除 ”并确认
+qp->qp:删除任务并更新列表和本地存储
+user<--qp
+@enduml
